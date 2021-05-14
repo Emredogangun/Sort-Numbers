@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<head>
+    <style>
+        div {margin-left: 40px;margin-top: 20px}
+        text {fill: black;}
+        rect {fill: blue;}
+        .sorted {fill: red;}
+        .min {fill: red;}
+        .testing {fill: red;}
+    </style>
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+</head>
+<body>
+    <div id="buttons">
+      
+        <button onclick="bogoSort()">Bogosort</button>
+		
+        <button onclick="stop = true" style="margin-left:40px">Durdur</button>
+        <button onclick="reset()">Yeniden Başlat</button>
+    </div>
+    <div>Adımlar: <span id="counter">0</span></div>
+</body>
+
+
+
+
+   
+        
+   
+
+<script>
+
+   var count = 1 + 20,
+        durationTime = 200000/count,
+        array = d3.shuffle(d3.range(1,count)),
+        unsortedArray = [...array],
+        sortedArray = [],
+        stop = false,
+        steps = 0,
+        bogoShuffles = 0;
+    
+    var margin = {top: 40, right: 40, bottom: 180, left: 40},
+        width = 960 - margin.left - margin.right,
+        height = 5000 - margin.top - margin.bottom;
+
+    var barWidth = width/count;
+
+    var x = d3.scaleLinear()
+        .domain([0,count])
+        .range([0, width]);
+
+    var svg = d3.select("body").append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+      .append("g")
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+      
+    var rects = svg.append("g")
+        .attr("transform", "translate(" + barWidth + ",2)")
+        .selectAll("rect")
+        .data(unsortedArray)
+      .enter().append("rect")
+    
+    var labels = svg.selectAll("text")
+        .data(unsortedArray)
+      .enter().append("text")
+        
+    labels.attr("id", function(d) {return "text" + d})
+        .attr("transform", function(d, i) {return "translate(" + x(i) + ",0)"})
+        .html(function(d) {return d;})
+
+    rects.attr("id", function(d) {return "rect" + d})
+        .attr("transform", function(d, i) {return "translate(" + (x(i) - barWidth) + ",0)"})
+        .attr("width", barWidth *.9)
+        .attr("height", function(d) {return d*barWidth/3})
+
+    function reset() {
+        unsortedArray = [...array];
+        sortedArray = [];
+        stop = false;
+
+        d3.select("#counter").html(steps = 0)
+
+        labels.attr("class", "")                
+            .transition().duration(2000)
+            .attr("transform", function(d, i) {return "translate(" + (x(i)) + ", 0)"})              
+        
+        rects.attr("class", "")                
+            .transition().duration(2000)
+            .attr("transform", function(d, i) {return "translate(" + (x(i-1)) + ", 0)"})
+    }
+
+    
+
+    function bogoSort() {
+        d3.select("#counter").html("<span id='steps'></span> shuffles: <span id='shuffles'></span>")
+
+        var bogoArray = d3.shuffle(d3.range(1,count));
+
+        function bogoShuffle() {
+
+            d3.select("#shuffles").html(++bogoShuffles)
+
+            for (i=0; i<bogoArray.length; i++) {
+
+                d3.select("#text" + bogoArray[i])
+                    .datum(bogoArray[i])
+                    .attr("class", "")                
+                    .attr("transform", function(d) {return "translate(" + (x(i)) + ", 0)"})              
+                
+                d3.select("#rect" + bogoArray[i])
+                    .datum(bogoArray[i])
+                    .attr("class", "")
+                    .attr("transform", function(d) {return "translate(" + (x(i-1)) + ", 0)"})
+            }
+        }
+
+        bogoShuffle();
+
+        var sorted = true;
+        var i = 0;
+        testNum();
+
+        if (stop) {
+            bogoShuffles = 0; 
+            return stop = false;
+        }
+        
+        function testNum() {
+            if (stop) return;
+
+            if (i == bogoArray.length) {
+                if (sorted != true) {
+                    return bogoSort();
+                } else {                
+                    console.log("sorted?!?!?!?")
+                    bogoShuffles = 0;
+                    steps = 0;
+                    return;
+                } 
+            } 
+
+            d3.select("#rect" + bogoArray[i]).attr("class", "testing")
+            d3.select("#steps").html(++steps)
+
+            d3.timeout(function() {
+                if (bogoArray[i] != i+1) {sorted = false;}
+                i++;
+                d3.selectAll("rect").attr("class", "")
+                testNum();
+            }, durationTime/20)            
+        }
+    }
+
+    
+    function slide(d, i) {
+        d3.select("#text" + d)
+            .transition().duration(durationTime)
+            .attr("transform", function(d) {return "translate(" + (x(i)) + ", 0)"})
+
+        d3.select("#rect" + d)
+            .transition().duration(durationTime)
+            .attr("transform", function(d) {return "translate(" + (x(i-1)) + ", 0)"})                
+    }
+
+
+</script>
